@@ -39,3 +39,14 @@
 
 # debug information files
 *.dwo
+
+#the build direactory
+/build/**
+
+#vscode
+/.vscode/**
+
+#glad
+/src/glad.c
+/include/glad/**
+/include/KHR/**
