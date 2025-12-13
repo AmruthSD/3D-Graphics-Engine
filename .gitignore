@@ -50,3 +50,6 @@
 /src/glad.c
 /include/glad/**
 /include/KHR/**
+
+#stb_image.h
+/include/stb_image.h
