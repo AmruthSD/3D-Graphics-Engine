@@ -1,56 +1,80 @@
 #include "camera.hpp"
 #include "common.hpp"
 
+struct SwapChainSupportDetails {
+  VkSurfaceCapabilitiesKHR capabilities;
+  std::vector<VkSurfaceFormatKHR> formats;
+  std::vector<VkPresentModeKHR> presentModes;
+};
+
+struct QueueFamilyIndices {
+  std::optional<uint32_t> graphicsFamily;
+  std::optional<uint32_t> presentFamily;
+
+  bool isComplete() {
+    return graphicsFamily.has_value() && presentFamily.has_value();
+  }
+};
+
 class WindowHandler {
+  // vulkan
+  const int MAX_FRAMES_IN_FLIGHT = 2;
+  std::vector<VkCommandBuffer> commandBuffers;
+  const bool enableValidationLayers = true;
+  const std::vector<const char *> validationLayers = {
+      "VK_LAYER_KHRONOS_validation"};
+  VkInstance instance;
+  VkDevice device;
+  VkQueue graphicsQueue;
+  VkQueue presentQueue;
+  VkSurfaceKHR surface;
+  VkSwapchainKHR swapChain;
+  std::vector<VkImage> swapChainImages;
+  VkFormat swapChainImageFormat;
+  VkExtent2D swapChainExtent;
+  std::vector<VkImageView> swapChainImageViews;
+  VkPipelineLayout pipelineLayout;
+  VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+  const std::vector<const char *> deviceExtensions = {
+      VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+  VkRenderPass renderPass;
+  VkPipeline graphicsPipeline;
+  std::vector<VkFramebuffer> swapChainFramebuffers;
+  VkCommandPool commandPool;
+
+  void initVulkan();
+  void pickDevice();
+  void logicalDevice();
+  void createSwapChain();
+  bool checkDeviceExtensionSupport(VkPhysicalDevice);
+  bool isDeviceSuitable(VkPhysicalDevice);
+  void createImageViews();
+  SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice);
+  VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
+  void createGraphicsPipeline();
+  VkShaderModule createShaderModule(const std::vector<char> &code);
+  void createRenderPass();
+  void createFramebuffers();
+  void createCommandPool();
+  QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+  VkCommandBuffer commandBuffer;
+  void createCommandBuffer();
+  void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+  void drawFrame();
+  bool checkValidationLayerSupport();
+
+  std::vector<VkSemaphore> imageAvailableSemaphores;
+  std::vector<VkSemaphore> renderFinishedSemaphores;
+  std::vector<VkFence> inFlightFences;
+  void createSyncObjects();
+
+  uint32_t currentFrame = 0;
+
 public:
   GLFWwindow *window;
-  unsigned int VBO, VAO;
-  unsigned int shaderProgram;
-  unsigned int texture1, texture2;
   WindowHandler();
   void startWindow();
+  ~WindowHandler();
 
   Camera *camera;
-
-  float deltaTime = 0.0f;
-  float lastFrame = 0.0f;
-
-  const char *vertexShaderSource =
-      "#version 410 core\n"
-      "layout (location = 0) in vec3 aPos;\n"
-      "layout (location = 1) in vec2 aTexCoord;\n"
-      "\n"
-      "out vec2 TexCoord;\n"
-      "\n"
-      "uniform mat4 model;\n"
-      "uniform mat4 view;\n"
-      "uniform mat4 projection;\n"
-      "\n"
-      "void main()\n"
-      "{\n"
-      "    gl_Position = projection * view * model * vec4(aPos, 1.0f);\n"
-      "    TexCoord = vec2(aTexCoord.x, aTexCoord.y);\n"
-      "}\n";
-
-  const char *fragmentShaderSource =
-      "#version 410 core\n"
-      "out vec4 FragColor;\n"
-      "\n"
-      "in vec2 TexCoord;\n"
-      "\n"
-      "// texture samplers\n"
-      "uniform sampler2D texture1;\n"
-      "uniform sampler2D texture2;\n"
-      "\n"
-      "void main()\n"
-      "{\n"
-      "    // linearly interpolate between both textures (80% container, 20% "
-      "awesomeface)\n"
-      "    FragColor = mix(texture(texture1, TexCoord), texture(texture2, "
-      "TexCoord), 0.2);\n"
-      "}\n";
-
-  void createShaders();
-  void setBuffers();
-  void setTexture();
 };
