@@ -1,5 +1,4 @@
 #include "camera.hpp"
-#include "common.hpp"
 
 struct SwapChainSupportDetails {
   VkSurfaceCapabilitiesKHR capabilities;
@@ -17,9 +16,14 @@ struct QueueFamilyIndices {
 };
 
 class WindowHandler {
+
+  std::vector<Vertex> vertices;
+  std::vector<uint32_t> indices;
+
   // vulkan
   const int MAX_FRAMES_IN_FLIGHT = 2;
   std::vector<VkCommandBuffer> commandBuffers;
+  VkBuffer vertexBuffer;
   const bool enableValidationLayers = true;
   const std::vector<const char *> validationLayers = {
       "VK_LAYER_KHRONOS_validation"};
@@ -49,6 +53,9 @@ class WindowHandler {
   bool checkDeviceExtensionSupport(VkPhysicalDevice);
   bool isDeviceSuitable(VkPhysicalDevice);
   void createImageViews();
+  VkImageView createImageView(VkImage image, VkFormat format,
+                              VkImageAspectFlags aspectFlags,
+                              uint32_t mipLevels);
   SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice);
   VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
   void createGraphicsPipeline();
@@ -62,15 +69,79 @@ class WindowHandler {
   void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
   void drawFrame();
   bool checkValidationLayerSupport();
-
+  void createVertexBuffer();
+  void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
+                    VkMemoryPropertyFlags properties, VkBuffer &buffer,
+                    VkDeviceMemory &bufferMemory);
+  void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+  uint32_t findMemoryType(uint32_t typeFilter,
+                          VkMemoryPropertyFlags properties);
   std::vector<VkSemaphore> imageAvailableSemaphores;
   std::vector<VkSemaphore> renderFinishedSemaphores;
   std::vector<VkFence> inFlightFences;
   void createSyncObjects();
 
   uint32_t currentFrame = 0;
+  VkDeviceMemory vertexBufferMemory;
+
+  VkBuffer indexBuffer;
+  VkDeviceMemory indexBufferMemory;
+  void createIndexBuffer();
+
+  void createDescriptorSetLayout();
+  VkDescriptorSetLayout descriptorSetLayout;
+
+  std::vector<VkBuffer> uniformBuffers;
+  std::vector<VkDeviceMemory> uniformBuffersMemory;
+  std::vector<void *> uniformBuffersMapped;
+  void createUniformBuffers();
+  void updateUniformBuffer(uint32_t currentFrame);
+
+  VkDescriptorPool descriptorPool;
+  std::vector<VkDescriptorSet> descriptorSets;
+  void createDescriptorPool();
+  void createDescriptorSets();
+
+  void recreateSwapChain();
+  void cleanupSwapChain();
+
+  void createTextureImage();
+  VkImage textureImage;
+  VkDeviceMemory textureImageMemory;
+  VkImageView textureImageView;
+  void createImage(uint32_t width, uint32_t height, uint32_t mipLevels,
+                   VkFormat format, VkImageTiling tiling,
+                   VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
+                   VkImage &image, VkDeviceMemory &imageMemory);
+  void transitionImageLayout(VkImage image, VkFormat format,
+                             VkImageLayout oldLayout, VkImageLayout newLayout,
+                             uint32_t mipLevels);
+  void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width,
+                         uint32_t height);
+  void createTextureImageView();
+  VkSampler textureSampler;
+  void createTextureSampler();
+
+  VkCommandBuffer beginSingleTimeCommands();
+  void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+
+  VkImage depthImage;
+  VkDeviceMemory depthImageMemory;
+  VkImageView depthImageView;
+  void createDepthResources();
+  VkFormat findSupportedFormat(const std::vector<VkFormat> &candidates,
+                               VkImageTiling tiling,
+                               VkFormatFeatureFlags features);
+  VkFormat findDepthFormat();
+
+  void loadModel();
+
+  uint32_t mipLevels;
+  void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth,
+                       int32_t texHeight, uint32_t mipLevels);
 
 public:
+  bool framebufferResized = false;
   GLFWwindow *window;
   WindowHandler();
   void startWindow();
