@@ -9,13 +9,15 @@ public:
   bool firstMouse = true;
   float yaw = -90.0f;
   float pitch = 0.0f;
+  float roll = 0.0f;
+
   float lastX = 800.0f / 2.0;
   float lastY = 600.0 / 2.0;
   float fov = 45.0f;
 
   void processInput(GLFWwindow *, float);
 
-  glm::mat4 getProgectionMatrix();
+  glm::mat4 getProgectionMatrix(float);
 
   glm::mat4 getView();
 };

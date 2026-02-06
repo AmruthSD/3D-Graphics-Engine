@@ -34,9 +34,32 @@ WindowHandler::WindowHandler() {
 }
 
 void WindowHandler::startWindow() {
+  float deltaTime = 0.0f;
+  float lastFrame = glfwGetTime();
+
+  const double targetFrameTime = 1.0 / 60.0;
+
   while (!glfwWindowShouldClose(window)) {
+    double frameStart = glfwGetTime();
+
     glfwPollEvents();
+
+    float currentFrame = glfwGetTime();
+    deltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
+
+    camera->processInput(window, deltaTime);
+
     drawFrame();
+
+    // ---- FPS LIMIT ----
+    double frameEnd = glfwGetTime();
+    double frameDuration = frameEnd - frameStart;
+
+    if (frameDuration < targetFrameTime) {
+      double sleepTime = targetFrameTime - frameDuration;
+      std::this_thread::sleep_for(std::chrono::duration<double>(sleepTime));
+    }
   }
 
   vkDeviceWaitIdle(device);
