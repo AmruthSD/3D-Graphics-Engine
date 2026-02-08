@@ -1,7 +1,7 @@
+#pragma once
 #include <common.hpp>
 
 class Camera {
-public:
   glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
   glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
   glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -11,13 +11,19 @@ public:
   float pitch = 0.0f;
   float roll = 0.0f;
 
-  float lastX = 800.0f / 2.0;
-  float lastY = 600.0 / 2.0;
+  float lastX = 800.0f;
+  float lastY = 600.0f;
   float fov = 45.0f;
 
+public:
   void processInput(GLFWwindow *, float);
 
   glm::mat4 getProgectionMatrix(float);
 
   glm::mat4 getView();
+
+  const glm::vec3 &getPosition() const { return cameraPos; }
+  float getX() const { return cameraPos.x; }
+  float getY() const { return cameraPos.y; }
+  float getZ() const { return cameraPos.z; }
 };

@@ -65,7 +65,7 @@ bool WindowHandler::isDeviceSuitable(VkPhysicalDevice device) {
 void WindowHandler::initVulkan() {
   VkApplicationInfo appInfo{};
   appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  appInfo.pApplicationName = "Hello Triangle";
+  appInfo.pApplicationName = "Minecraft Terrain";
   appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
   appInfo.pEngineName = "No Engine";
   appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -106,25 +106,31 @@ void WindowHandler::initVulkan() {
   }
 
   pickDevice();
-  loadModel();
   logicalDevice();
+
   createSwapChain();
   createImageViews();
+
   createRenderPass();
   createDescriptorSetLayout();
   createGraphicsPipeline();
-  createCommandPool();
+
   createDepthResources();
   createFramebuffers();
+
+  createCommandPool();
+
   createTextureImage();
   createTextureImageView();
   createTextureSampler();
-  createVertexBuffer();
-  createIndexBuffer();
+
   createUniformBuffers();
+
   createDescriptorPool();
   createDescriptorSets();
+
   createCommandBuffer();
+
   createSyncObjects();
 }
 

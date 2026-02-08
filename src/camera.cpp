@@ -3,7 +3,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 void Camera::processInput(GLFWwindow *window, float deltaTime) {
-  float cameraSpeed = 2.5f * deltaTime;
+  float cameraSpeed = 25.0f * deltaTime;
   float rotationSpeed = 60.0f * deltaTime;
 
   // -------- Movement --------

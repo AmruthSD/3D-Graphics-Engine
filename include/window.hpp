@@ -1,4 +1,7 @@
-#include "camera.hpp"
+#pragma once
+#include <camera.hpp>
+#include <common.hpp>
+#include <terrain.hpp>
 
 struct SwapChainSupportDetails {
   VkSurfaceCapabilitiesKHR capabilities;
@@ -16,14 +19,10 @@ struct QueueFamilyIndices {
 };
 
 class WindowHandler {
-
-  std::vector<Vertex> vertices;
-  std::vector<uint32_t> indices;
-
   // vulkan
   const int MAX_FRAMES_IN_FLIGHT = 2;
   std::vector<VkCommandBuffer> commandBuffers;
-  VkBuffer vertexBuffer;
+
   const bool enableValidationLayers = true;
   const std::vector<const char *> validationLayers = {
       "VK_LAYER_KHRONOS_validation"};
@@ -69,7 +68,7 @@ class WindowHandler {
   void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
   void drawFrame();
   bool checkValidationLayerSupport();
-  void createVertexBuffer();
+
   void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
                     VkMemoryPropertyFlags properties, VkBuffer &buffer,
                     VkDeviceMemory &bufferMemory);
@@ -82,11 +81,10 @@ class WindowHandler {
   void createSyncObjects();
 
   uint32_t currentFrame = 0;
-  VkDeviceMemory vertexBufferMemory;
 
-  VkBuffer indexBuffer;
-  VkDeviceMemory indexBufferMemory;
-  void createIndexBuffer();
+  unordered_map<Chunk, VkBuffer, ChunkHash> vertexBuffers;
+  unordered_map<Chunk, VkDeviceMemory, ChunkHash> vertexBufferMemories;
+  void createVertexBuffer(Chunk);
 
   void createDescriptorSetLayout();
   VkDescriptorSetLayout descriptorSetLayout;
@@ -134,11 +132,11 @@ class WindowHandler {
                                VkFormatFeatureFlags features);
   VkFormat findDepthFormat();
 
-  void loadModel();
-
   uint32_t mipLevels;
   void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth,
                        int32_t texHeight, uint32_t mipLevels);
+
+  Terrain *terrain;
 
 public:
   bool framebufferResized = false;

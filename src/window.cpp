@@ -13,7 +13,6 @@ static void framebufferResizeCallback(GLFWwindow *window, int width,
 WindowHandler::WindowHandler() {
   glfwInit();
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  ;
 
   window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan Engine", nullptr, nullptr);
   glfwSetWindowUserPointer(window, this);
@@ -31,6 +30,7 @@ WindowHandler::WindowHandler() {
 
   initVulkan();
   camera = new Camera();
+  terrain = new Terrain(*(camera));
 }
 
 void WindowHandler::startWindow() {
@@ -85,12 +85,6 @@ WindowHandler::~WindowHandler() {
   vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 
   vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
-
-  vkDestroyBuffer(device, indexBuffer, nullptr);
-  vkFreeMemory(device, indexBufferMemory, nullptr);
-
-  vkDestroyBuffer(device, vertexBuffer, nullptr);
-  vkFreeMemory(device, vertexBufferMemory, nullptr);
 
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);

@@ -114,18 +114,35 @@ void WindowHandler::recordCommandBuffer(VkCommandBuffer commandBuffer,
   scissor.extent = swapChainExtent;
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-  VkBuffer vertexBuffers[] = {vertexBuffer};
-  VkDeviceSize offsets[] = {0};
-  vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-
-  vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           pipelineLayout, 0, 1, &descriptorSets[currentFrame],
                           0, nullptr);
 
-  vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0,
-                   0, 0);
+  int camChunkX =
+      static_cast<int>(std::floor(camera->getPosition().x / CHUNK_SIZE));
+  int camChunkZ =
+      static_cast<int>(std::floor(camera->getPosition().z / CHUNK_SIZE));
+
+  for (int dz = -RADIUS; dz <= RADIUS; dz++) {
+    for (int dx = -RADIUS; dx <= RADIUS; dx++) {
+
+      Chunk chunk{camChunkX + dx, camChunkZ + dz};
+
+      if (!vertexBuffers.contains(chunk)) {
+        createVertexBuffer(chunk);
+      }
+
+      VkBuffer vb = vertexBuffers[chunk];
+      VkDeviceSize offsets[] = {0};
+
+      vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vb, offsets);
+
+      vkCmdDraw(
+          commandBuffer,
+          static_cast<uint32_t>(terrain->ChunkMeshes[chunk].vertices.size()), 1,
+          0, 0);
+    }
+  }
 
   vkCmdEndRenderPass(commandBuffer);
 

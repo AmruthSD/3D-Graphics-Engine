@@ -13,15 +13,15 @@
 
 using namespace std;
 
+const std::string TEXTURE_PATH = "../assets/viking_room.png";
+
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
-const std::string MODEL_PATH = "../assets/viking_room.obj";
-const std::string TEXTURE_PATH = "../assets/viking_room.png";
-
-struct vertex {
-  float x, y, z;
-};
+static const int CHUNK_SIZE = 16;
+static const int MAX_HEIGHT = 128;
+static const int SEA_LEVEL = 0;
+const int RADIUS = 8;
 
 struct UniformBufferObject {
   alignas(16) glm::mat4 model;
@@ -30,58 +30,54 @@ struct UniformBufferObject {
 };
 
 struct Vertex {
-  glm::vec3 pos;
-  glm::vec3 color;
-  glm::vec2 texCoord;
+  glm::vec3 position;
+  uint32_t material;
 
   static VkVertexInputBindingDescription getBindingDescription() {
-    VkVertexInputBindingDescription bindingDescription{};
-    bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(Vertex);
-    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-    return bindingDescription;
+    VkVertexInputBindingDescription binding{};
+    binding.binding = 0;
+    binding.stride = sizeof(Vertex);
+    binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    return binding;
   }
 
-  static std::array<VkVertexInputAttributeDescription, 3>
+  static std::array<VkVertexInputAttributeDescription, 2>
   getAttributeDescriptions() {
-    std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
+    std::array<VkVertexInputAttributeDescription, 2> attrs{};
 
-    attributeDescriptions[0].binding = 0;
-    attributeDescriptions[0].location = 0;
-    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[0].offset = offsetof(Vertex, pos);
+    // position
+    attrs[0].binding = 0;
+    attrs[0].location = 0;
+    attrs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attrs[0].offset = offsetof(Vertex, position);
 
-    attributeDescriptions[1].binding = 0;
-    attributeDescriptions[1].location = 1;
-    attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[1].offset = offsetof(Vertex, color);
+    // color
+    attrs[1].binding = 0;
+    attrs[1].location = 1;
+    attrs[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attrs[1].offset = offsetof(Vertex, material);
 
-    attributeDescriptions[2].binding = 0;
-    attributeDescriptions[2].location = 2;
-    attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-    attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
-
-    return attributeDescriptions;
-  }
-
-  bool operator==(const Vertex &other) const {
-    return pos == other.pos && color == other.color &&
-           texCoord == other.texCoord;
+    return attrs;
   }
 };
 
-namespace std {
-template <> struct hash<Vertex> {
-  size_t operator()(Vertex const &vertex) const {
-    return ((hash<glm::vec3>()(vertex.pos) ^
-             (hash<glm::vec3>()(vertex.color) << 1)) >>
-            1) ^
-           (hash<glm::vec2>()(vertex.texCoord) << 1);
+struct ChunkMesh {
+  std::vector<Vertex> vertices;
+};
+
+enum class Biome { Ocean, Plain, Mountain, Snow };
+
+struct Chunk {
+  int x;
+  int z;
+
+  bool operator==(const Chunk &other) const {
+    return x == other.x && z == other.z;
   }
 };
-} // namespace std
 
-struct triangle {
-  array<vertex, 3> vertices;
+struct ChunkHash {
+  std::size_t operator()(const Chunk &c) const {
+    return std::hash<int>()(c.x) ^ (std::hash<int>()(c.z) << 1);
+  }
 };
