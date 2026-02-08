@@ -5,7 +5,6 @@ void WindowHandler::createTextureImage() {
   stbi_uc *pixels = stbi_load(TEXTURE_PATH.c_str(), &texWidth, &texHeight,
                               &texChannels, STBI_rgb_alpha);
   VkDeviceSize imageSize = texWidth * texHeight * 4;
-
   mipLevels = static_cast<uint32_t>(
                   std::floor(std::log2(std::max(texWidth, texHeight)))) +
               1;
@@ -41,9 +40,6 @@ void WindowHandler::createTextureImage() {
   copyBufferToImage(stagingBuffer, textureImage,
                     static_cast<uint32_t>(texWidth),
                     static_cast<uint32_t>(texHeight));
-  transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB,
-                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mipLevels);
 
   vkDestroyBuffer(device, stagingBuffer, nullptr);
   vkFreeMemory(device, stagingBufferMemory, nullptr);
@@ -183,7 +179,7 @@ void WindowHandler::createTextureSampler() {
   samplerInfo.compareEnable = VK_FALSE;
   samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
   samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-  samplerInfo.minLod = static_cast<float>(mipLevels / 2);
+  samplerInfo.minLod = 0.0f;
   samplerInfo.maxLod = VK_LOD_CLAMP_NONE;
   samplerInfo.mipLodBias = 0.0f;
 

@@ -176,6 +176,7 @@ void WindowHandler::recreateSwapChain() {
 
   createSwapChain();
   createImageViews();
+  createDepthResources();
   createFramebuffers();
 }
 
