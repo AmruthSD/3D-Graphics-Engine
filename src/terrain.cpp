@@ -2,15 +2,17 @@
 
 void addQuad(ChunkMesh &mesh, glm::vec3 a, glm::vec3 b, glm::vec3 c,
              glm::vec3 d, Biome biome) {
-  // Triangle 1
-  mesh.vertices.push_back({a, (uint8_t)biome});
-  mesh.vertices.push_back({b, (uint8_t)biome});
-  mesh.vertices.push_back({c, (uint8_t)biome});
+  uint8_t bID = (uint8_t)biome;
 
-  // Triangle 2
-  mesh.vertices.push_back({a, (uint8_t)biome});
-  mesh.vertices.push_back({c, (uint8_t)biome});
-  mesh.vertices.push_back({d, (uint8_t)biome});
+  // Triangle 1 (a, b, c)
+  mesh.vertices.push_back({a, bID, glm::vec2(0.0f, 0.0f)});
+  mesh.vertices.push_back({b, bID, glm::vec2(1.0f, 0.0f)});
+  mesh.vertices.push_back({c, bID, glm::vec2(1.0f, 1.0f)});
+
+  // Triangle 2 (a, c, d)
+  mesh.vertices.push_back({a, bID, glm::vec2(0.0f, 0.0f)});
+  mesh.vertices.push_back({c, bID, glm::vec2(1.0f, 1.0f)});
+  mesh.vertices.push_back({d, bID, glm::vec2(0.0f, 1.0f)});
 }
 
 Terrain::Terrain(Camera &camera_, long long seed_)
@@ -21,7 +23,8 @@ Terrain::Terrain(Camera &camera_)
                            .time_since_epoch()
                            .count()) {}
 
-void Terrain::requestChunk(int chunkX, int chunkZ) {
+void Terrain::requestChunk(int chunkX, int chunkZ,
+                           std::function<void(Chunk)> callback) {
   Chunk chunk{chunkX, chunkZ};
 
   {
@@ -30,7 +33,7 @@ void Terrain::requestChunk(int chunkX, int chunkZ) {
       return;
   }
 
-  pool.enqueue([this, chunkX, chunkZ]() { generateChunk(chunkX, chunkZ); });
+  pool.enqueue([chunk, callback]() { callback(chunk); });
 }
 
 void Terrain::generateChunk(int chunkX, int chunkZ) {
@@ -58,30 +61,49 @@ void Terrain::generateChunk(int chunkX, int chunkZ) {
       int worldX = chunkX * CHUNK_SIZE + x;
       int worldZ = chunkZ * CHUNK_SIZE + z;
 
-      float c =
+      float continent =
           (continentNoise.GetNoise((float)worldX, (float)worldZ) + 1.0f) * 0.5f;
 
       Biome biome;
       int height;
 
-      if (c < 0.45f) {
+      // ----------- OCEAN ------------
+      if (continent < 0.48f) {
         biome = Biome::Ocean;
         height = SEA_LEVEL;
       } else {
-        float b =
+
+        float biomeVal =
             (biomeNoise.GetNoise((float)worldX, (float)worldZ) + 1.0f) * 0.5f;
+
         float h =
             (heightNoise.GetNoise((float)worldX, (float)worldZ) + 1.0f) * 0.5f;
 
-        if (b < 0.4f) {
+        // -------- PLAINS (dominant biome)
+        if (biomeVal < 0.65f) {
+
           biome = Biome::Plain;
-          height = SEA_LEVEL + static_cast<int>(h * 20);
-        } else if (b < 0.75f) {
+
+          h = h * h; // flatten heavily
+          height = SEA_LEVEL + (int)(h * 6);
+        }
+
+        // -------- MOUNTAINS (rare + sharp)
+        else if (biomeVal < 0.85f) {
+
           biome = Biome::Mountain;
-          height = SEA_LEVEL + static_cast<int>(h * 60);
-        } else {
+
+          float m = pow(h, 4.0f); // very sharp peaks
+          height = SEA_LEVEL + (int)(m * 60);
+        }
+
+        // -------- SNOW (very rare highlands)
+        else {
+
           biome = Biome::Snow;
-          height = SEA_LEVEL + 40 + static_cast<int>(h * 50);
+
+          float s = pow(h, 2.5f);
+          height = SEA_LEVEL + 35 + (int)(s * 30);
         }
       }
 

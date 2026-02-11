@@ -6,13 +6,13 @@ class Camera {
   glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
   glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
+  FrustumPlane frustumPlanes[6];
+
   bool firstMouse = true;
   float yaw = -90.0f;
   float pitch = 0.0f;
   float roll = 0.0f;
 
-  float lastX = 800.0f;
-  float lastY = 600.0f;
   float fov = 45.0f;
 
 public:
@@ -26,4 +26,7 @@ public:
   float getX() const { return cameraPos.x; }
   float getY() const { return cameraPos.y; }
   float getZ() const { return cameraPos.z; }
+
+  bool isChunkInFrustum(Chunk);
+  void updateFrustumPlanes(float aspect, float nearPlane, float farPlane);
 };

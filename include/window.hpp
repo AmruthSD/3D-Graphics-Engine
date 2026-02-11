@@ -137,6 +137,10 @@ class WindowHandler {
                        int32_t texHeight, uint32_t mipLevels);
 
   Terrain *terrain;
+  int width;
+  int height;
+
+  void cleanupFarChunks(int camChunkX, int camChunkZ);
 
 public:
   bool framebufferResized = false;

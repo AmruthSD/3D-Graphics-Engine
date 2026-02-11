@@ -4,6 +4,10 @@ void WindowHandler::drawFrame() {
   vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE,
                   UINT64_MAX);
 
+  camera->updateFrustumPlanes(static_cast<float>(width) /
+                                  static_cast<float>(height),
+                              NEAR_PLANE, FAR_PLANE);
+
   uint32_t imageIndex;
   VkResult result = vkAcquireNextImageKHR(
       device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame],
@@ -69,6 +73,13 @@ void WindowHandler::drawFrame() {
   }
 
   currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+
+  int camChunkX =
+      static_cast<int>(std::floor(camera->getPosition().x / CHUNK_SIZE));
+  int camChunkZ =
+      static_cast<int>(std::floor(camera->getPosition().z / CHUNK_SIZE));
+
+  cleanupFarChunks(camChunkX, camChunkZ);
 }
 
 void WindowHandler::recordCommandBuffer(VkCommandBuffer commandBuffer,
@@ -128,19 +139,28 @@ void WindowHandler::recordCommandBuffer(VkCommandBuffer commandBuffer,
 
       Chunk chunk{camChunkX + dx, camChunkZ + dz};
 
-      if (!vertexBuffers.contains(chunk)) {
+      if (!terrain->ChunkMeshes.contains(chunk)) {
+        terrain->requestChunk(chunk.x, chunk.z, [this](Chunk c) {
+          this->terrain->generateChunk(c.x, c.z);
+        });
+      }
+
+      if (terrain->ChunkMeshes.contains(chunk) &&
+          !vertexBuffers.contains(chunk)) {
         createVertexBuffer(chunk);
       }
 
-      VkBuffer vb = vertexBuffers[chunk];
-      VkDeviceSize offsets[] = {0};
+      if (vertexBuffers.contains(chunk) && camera->isChunkInFrustum(chunk)) {
+        VkBuffer vb = vertexBuffers[chunk];
+        VkDeviceSize offsets[] = {0};
 
-      vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vb, offsets);
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vb, offsets);
 
-      vkCmdDraw(
-          commandBuffer,
-          static_cast<uint32_t>(terrain->ChunkMeshes[chunk].vertices.size()), 1,
-          0, 0);
+        vkCmdDraw(
+            commandBuffer,
+            static_cast<uint32_t>(terrain->ChunkMeshes[chunk].vertices.size()),
+            1, 0, 0);
+      }
     }
   }
 
@@ -148,5 +168,30 @@ void WindowHandler::recordCommandBuffer(VkCommandBuffer commandBuffer,
 
   if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
     throw std::runtime_error("failed to record command buffer!");
+  }
+}
+
+void WindowHandler::cleanupFarChunks(int camChunkX, int camChunkZ) {
+
+  std::vector<Chunk> toRemove;
+
+  for (const auto &[chunk, buffer] : vertexBuffers) {
+
+    int dx = chunk.x - camChunkX;
+    int dz = chunk.z - camChunkZ;
+
+    if (std::abs(dx) > 2 * RADIUS || std::abs(dz) > 2 * RADIUS) {
+      toRemove.push_back(chunk);
+    }
+  }
+
+  for (const Chunk &chunk : toRemove) {
+
+    vkDestroyBuffer(device, vertexBuffers[chunk], nullptr);
+    vkFreeMemory(device, vertexBufferMemories[chunk], nullptr);
+
+    vertexBuffers.erase(chunk);
+    vertexBufferMemories.erase(chunk);
+    terrain->ChunkMeshes.erase(chunk);
   }
 }

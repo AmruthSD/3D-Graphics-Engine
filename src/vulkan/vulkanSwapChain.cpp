@@ -135,9 +135,8 @@ void WindowHandler::createImageViews() {
   swapChainImageViews.resize(swapChainImages.size());
 
   for (uint32_t i = 0; i < swapChainImages.size(); i++) {
-    swapChainImageViews[i] =
-        createImageView(swapChainImages[i], swapChainImageFormat,
-                        VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
+    swapChainImageViews[i] = createImageView(
+        swapChainImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
   }
 }
 VkImageView WindowHandler::createImageView(VkImage image, VkFormat format,
@@ -163,7 +162,7 @@ VkImageView WindowHandler::createImageView(VkImage image, VkFormat format,
 }
 
 void WindowHandler::recreateSwapChain() {
-  int width = 0, height = 0;
+
   glfwGetFramebufferSize(window, &width, &height);
   while (width == 0 || height == 0) {
     glfwGetFramebufferSize(window, &width, &height);

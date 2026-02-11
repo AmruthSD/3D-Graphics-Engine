@@ -18,10 +18,12 @@ const std::string TEXTURE_PATH = "../assets/viking_room.png";
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
-static const int CHUNK_SIZE = 16;
+static const int CHUNK_SIZE = 12;
 static const int MAX_HEIGHT = 128;
 static const int SEA_LEVEL = 0;
-const int RADIUS = 8;
+const int RADIUS = 10;
+const float NEAR_PLANE = 0.1f;
+constexpr float FAR_PLANE = RADIUS * CHUNK_SIZE;
 
 struct UniformBufferObject {
   alignas(16) glm::mat4 model;
@@ -31,7 +33,8 @@ struct UniformBufferObject {
 
 struct Vertex {
   glm::vec3 position;
-  uint32_t material;
+  uint32_t inBiome;
+  glm::vec2 localUV;
 
   static VkVertexInputBindingDescription getBindingDescription() {
     VkVertexInputBindingDescription binding{};
@@ -41,9 +44,9 @@ struct Vertex {
     return binding;
   }
 
-  static std::array<VkVertexInputAttributeDescription, 2>
+  static std::array<VkVertexInputAttributeDescription, 3>
   getAttributeDescriptions() {
-    std::array<VkVertexInputAttributeDescription, 2> attrs{};
+    std::array<VkVertexInputAttributeDescription, 3> attrs{};
 
     // position
     attrs[0].binding = 0;
@@ -54,8 +57,14 @@ struct Vertex {
     // color
     attrs[1].binding = 0;
     attrs[1].location = 1;
-    attrs[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attrs[1].offset = offsetof(Vertex, material);
+    attrs[1].format = VK_FORMAT_R32_UINT;
+    attrs[1].offset = offsetof(Vertex, inBiome);
+
+    // coordinates
+    attrs[2].binding = 0;
+    attrs[2].location = 2;
+    attrs[2].format = VK_FORMAT_R32G32_SFLOAT;
+    attrs[2].offset = offsetof(Vertex, localUV);
 
     return attrs;
   }
@@ -80,4 +89,9 @@ struct ChunkHash {
   std::size_t operator()(const Chunk &c) const {
     return std::hash<int>()(c.x) ^ (std::hash<int>()(c.z) << 1);
   }
+};
+
+struct FrustumPlane {
+  glm::vec3 normal;
+  float d;
 };

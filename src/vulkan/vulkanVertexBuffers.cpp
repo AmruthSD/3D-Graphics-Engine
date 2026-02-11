@@ -2,7 +2,6 @@
 
 void WindowHandler::createVertexBuffer(Chunk chunk) {
 
-  terrain->generateChunk(chunk.x, chunk.z);
   const auto &verts = terrain->ChunkMeshes[chunk].vertices;
   if (verts.empty())
     return;

@@ -76,7 +76,8 @@ void Camera::processInput(GLFWwindow *window, float deltaTime) {
 }
 
 glm::mat4 Camera::getProgectionMatrix(float aspect) {
-  glm::mat4 proj = glm::perspective(glm::radians(fov), aspect, 0.1f, 100.0f);
+  glm::mat4 proj =
+      glm::perspective(glm::radians(fov), aspect, NEAR_PLANE, FAR_PLANE);
 
   proj[1][1] *= -1;
 
@@ -85,4 +86,82 @@ glm::mat4 Camera::getProgectionMatrix(float aspect) {
 
 glm::mat4 Camera::getView() {
   return glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+}
+
+bool Camera::isChunkInFrustum(Chunk chunk) {
+
+  glm::vec3 min;
+  min.x = chunk.x * CHUNK_SIZE;
+  min.y = 0;
+  min.z = chunk.z * CHUNK_SIZE;
+
+  glm::vec3 max = min + glm::vec3(CHUNK_SIZE, MAX_HEIGHT, CHUNK_SIZE);
+
+  // --- Frustum test ---
+  for (int i = 0; i < 6; i++) {
+    const glm::vec3 &n = frustumPlanes[i].normal;
+
+    glm::vec3 p;
+    p.x = (n.x >= 0.0f) ? max.x : min.x;
+    p.y = (n.y >= 0.0f) ? max.y : min.y;
+    p.z = (n.z >= 0.0f) ? max.z : min.z;
+
+    // Plane test
+    if (glm::dot(n, p) + frustumPlanes[i].d < 0.0f)
+      return false;
+  }
+
+  return true;
+}
+
+void Camera::updateFrustumPlanes(float aspect, float nearPlane,
+                                 float farPlane) {
+  glm::mat4 view = getView();
+
+  glm::mat4 proj = getProgectionMatrix(aspect);
+
+  glm::mat4 VP = proj * view;
+
+  // Left
+  frustumPlanes[0].normal.x = VP[0][3] + VP[0][0];
+  frustumPlanes[0].normal.y = VP[1][3] + VP[1][0];
+  frustumPlanes[0].normal.z = VP[2][3] + VP[2][0];
+  frustumPlanes[0].d = VP[3][3] + VP[3][0];
+
+  // Right
+  frustumPlanes[1].normal.x = VP[0][3] - VP[0][0];
+  frustumPlanes[1].normal.y = VP[1][3] - VP[1][0];
+  frustumPlanes[1].normal.z = VP[2][3] - VP[2][0];
+  frustumPlanes[1].d = VP[3][3] - VP[3][0];
+
+  // Bottom
+  frustumPlanes[2].normal.x = VP[0][3] + VP[0][1];
+  frustumPlanes[2].normal.y = VP[1][3] + VP[1][1];
+  frustumPlanes[2].normal.z = VP[2][3] + VP[2][1];
+  frustumPlanes[2].d = VP[3][3] + VP[3][1];
+
+  // Top
+  frustumPlanes[3].normal.x = VP[0][3] - VP[0][1];
+  frustumPlanes[3].normal.y = VP[1][3] - VP[1][1];
+  frustumPlanes[3].normal.z = VP[2][3] - VP[2][1];
+  frustumPlanes[3].d = VP[3][3] - VP[3][1];
+
+  // Near
+  frustumPlanes[4].normal.x = VP[0][3] + VP[0][2];
+  frustumPlanes[4].normal.y = VP[1][3] + VP[1][2];
+  frustumPlanes[4].normal.z = VP[2][3] + VP[2][2];
+  frustumPlanes[4].d = VP[3][3] + VP[3][2];
+
+  // Far
+  frustumPlanes[5].normal.x = VP[0][3] - VP[0][2];
+  frustumPlanes[5].normal.y = VP[1][3] - VP[1][2];
+  frustumPlanes[5].normal.z = VP[2][3] - VP[2][2];
+  frustumPlanes[5].d = VP[3][3] - VP[3][2];
+
+  // Normalize all planes
+  for (int i = 0; i < 6; i++) {
+    float len = glm::length(frustumPlanes[i].normal);
+    frustumPlanes[i].normal /= len;
+    frustumPlanes[i].d /= len;
+  }
 }

@@ -58,8 +58,8 @@ void WindowHandler::updateUniformBuffer(uint32_t currentImage) {
   ubo.view = camera->getView();
 
   // Projection from camera
-  ubo.proj = camera->getProgectionMatrix(swapChainExtent.width /
-                                         (float)swapChainExtent.height);
+  ubo.proj = camera->getProgectionMatrix(static_cast<float>(width) /
+                                         static_cast<float>(height));
 
   memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }

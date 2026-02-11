@@ -25,6 +25,7 @@ public:
   Terrain(Camera &camera);
   unordered_map<Chunk, ChunkMesh, ChunkHash> ChunkMeshes;
   void generateChunk(int chunkX, int chunkZ);
-  void requestChunk(int chunkX, int chunkZ);
+  void requestChunk(int chunkX, int chunkZ,
+                    std::function<void(Chunk)> callback);
   void deleteChunk(int chunkX, int chunkZ);
 };

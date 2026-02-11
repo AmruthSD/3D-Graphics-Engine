@@ -15,6 +15,8 @@ WindowHandler::WindowHandler() {
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
   window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan Engine", nullptr, nullptr);
+  width = WIDTH;
+  height = HEIGHT;
   glfwSetWindowUserPointer(window, this);
   glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
   //   uint32_t extensionCount = 0;
