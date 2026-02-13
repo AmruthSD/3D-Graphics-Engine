@@ -113,7 +113,9 @@ void WindowHandler::initVulkan() {
 
   createRenderPass();
   createDescriptorSetLayout();
+  createComputeDescriptorSetLayout();
   createGraphicsPipeline();
+  createComputePipeline();
 
   createDepthResources();
   createFramebuffers();
@@ -125,13 +127,19 @@ void WindowHandler::initVulkan() {
   createTextureSampler();
 
   createUniformBuffers();
+  createComputeBuffers();
+  createResultImage();
 
   createDescriptorPool();
   createDescriptorSets();
+  createComputeDescriptorPool();
+  createComputeDescriptorSet();
 
   createCommandBuffer();
 
   createSyncObjects();
+
+  cout << "INIT is DONE" << endl;
 }
 
 void WindowHandler::pickDevice() {

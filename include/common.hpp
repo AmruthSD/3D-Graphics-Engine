@@ -95,3 +95,33 @@ struct FrustumPlane {
   glm::vec3 normal;
   float d;
 };
+
+struct TriangleGPU {
+  glm::vec3 v0;
+  float pad0;
+  glm::vec3 v1;
+  float pad1;
+  glm::vec3 v2;
+  float pad2;
+};
+
+struct BVHNodeGPU {
+  glm::vec3 minBounds;
+  float pad0;
+  glm::vec3 maxBounds;
+  float pad1;
+  int leftFirst;
+  int count;
+  int pad2;
+  int pad3;
+};
+
+struct alignas(16) ComputeUBO {
+  glm::mat4 invViewProj;
+
+  glm::vec4 cameraPos; // w unused
+  glm::vec4 lightDir;  // w unused
+
+  glm::vec2 resolution;
+  glm::vec2 padding;
+};

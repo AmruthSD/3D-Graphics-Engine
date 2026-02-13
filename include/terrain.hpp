@@ -20,6 +20,9 @@ class Terrain {
   Camera &camera;
   ThreadPool pool;
 
+  void buildBVH(std::vector<TriangleGPU> &outTriangles,
+                std::vector<BVHNodeGPU> &outBVH);
+
 public:
   Terrain(Camera &camera, long long seed);
   Terrain(Camera &camera);
@@ -28,4 +31,7 @@ public:
   void requestChunk(int chunkX, int chunkZ,
                     std::function<void(Chunk)> callback);
   void deleteChunk(int chunkX, int chunkZ);
+
+  void buildRayTracingScene(std::vector<TriangleGPU> &outTriangles,
+                            std::vector<BVHNodeGPU> &outBVH);
 };

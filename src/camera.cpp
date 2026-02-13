@@ -165,3 +165,10 @@ void Camera::updateFrustumPlanes(float aspect, float nearPlane,
     frustumPlanes[i].d /= len;
   }
 }
+
+Chunk Camera::getCurrentChunk() {
+  int chunkX = static_cast<int>(std::floor(cameraPos.x / CHUNK_SIZE));
+  int chunkZ = static_cast<int>(std::floor(cameraPos.z / CHUNK_SIZE));
+
+  return Chunk{chunkX, chunkZ};
+}

@@ -22,6 +22,8 @@ public:
 
   glm::mat4 getView();
 
+  Chunk getCurrentChunk();
+
   const glm::vec3 &getPosition() const { return cameraPos; }
   float getX() const { return cameraPos.x; }
   float getY() const { return cameraPos.y; }

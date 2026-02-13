@@ -173,3 +173,39 @@ void Terrain::deleteChunk(int chunkX, int chunkZ) {
   std::lock_guard<std::mutex> lock(chunkMutex);
   ChunkMeshes.erase(chunk);
 }
+
+void Terrain::buildRayTracingScene(std::vector<TriangleGPU> &outTriangles,
+                                   std::vector<BVHNodeGPU> &outBVH) {
+  std::lock_guard<std::mutex> lock(chunkMutex);
+
+  outTriangles.clear();
+  outBVH.clear();
+
+  int camChunkX =
+      static_cast<int>(std::floor(camera.getPosition().x / CHUNK_SIZE));
+  int camChunkZ =
+      static_cast<int>(std::floor(camera.getPosition().z / CHUNK_SIZE));
+
+  for (int dz = -RADIUS; dz <= RADIUS; dz++) {
+    for (int dx = -RADIUS; dx <= RADIUS; dx++) {
+
+      Chunk chunk{camChunkX + dx, camChunkZ + dz};
+
+      if (ChunkMeshes.contains(chunk)) {
+        const auto &verts = ChunkMeshes[chunk].vertices;
+
+        for (size_t i = 0; i + 2 < verts.size(); i += 3) {
+          TriangleGPU tri;
+
+          tri.v0 = verts[i + 0].position;
+          tri.v1 = verts[i + 1].position;
+          tri.v2 = verts[i + 2].position;
+
+          outTriangles.push_back(tri);
+        }
+      }
+    }
+  }
+
+  buildBVH(outTriangles, outBVH);
+}

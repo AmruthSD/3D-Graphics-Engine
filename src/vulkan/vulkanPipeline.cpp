@@ -163,3 +163,39 @@ void WindowHandler::createGraphicsPipeline() {
   vkDestroyShaderModule(device, fragShaderModule, nullptr);
   vkDestroyShaderModule(device, vertShaderModule, nullptr);
 }
+
+void WindowHandler::createComputePipeline() {
+  auto compShaderCode = readFile("../shaders/raytrace.comp.spv");
+
+  VkShaderModule compShaderModule = createShaderModule(compShaderCode);
+
+  VkPipelineShaderStageCreateInfo compShaderStageInfo{};
+  compShaderStageInfo.sType =
+      VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  compShaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+  compShaderStageInfo.module = compShaderModule;
+  compShaderStageInfo.pName = "main";
+
+  VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+  pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+
+  pipelineLayoutInfo.setLayoutCount = 1;
+  pipelineLayoutInfo.pSetLayouts = &computeDescriptorSetLayout;
+
+  if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr,
+                             &computePipelineLayout) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create compute pipeline layout!");
+  }
+
+  VkComputePipelineCreateInfo pipelineInfo{};
+  pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+  pipelineInfo.stage = compShaderStageInfo;
+  pipelineInfo.layout = computePipelineLayout;
+
+  if (vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo,
+                               nullptr, &computePipeline) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create compute pipeline!");
+  }
+
+  vkDestroyShaderModule(device, compShaderModule, nullptr);
+}

@@ -141,6 +141,40 @@ class WindowHandler {
   int height;
 
   void cleanupFarChunks(int camChunkX, int camChunkZ);
+  void FrustumCull(VkCommandBuffer commandBuffer);
+
+  VkPipeline computePipeline;
+  VkPipelineLayout computePipelineLayout;
+  void createComputePipeline();
+
+  VkDescriptorSetLayout computeDescriptorSetLayout;
+  VkDescriptorPool computeDescriptorPool;
+  VkDescriptorSet computeDescriptorSet;
+  VkBuffer triangleBuffer = VK_NULL_HANDLE;
+  VkDeviceMemory triangleBufferMemory = VK_NULL_HANDLE;
+  VkDeviceSize triangleBufferSize = 0;
+
+  VkBuffer bvhBuffer = VK_NULL_HANDLE;
+  VkDeviceMemory bvhBufferMemory = VK_NULL_HANDLE;
+  VkDeviceSize bvhBufferSize = 0;
+
+  VkBuffer computeUniformBuffer = VK_NULL_HANDLE;
+  VkDeviceMemory computeUniformBufferMemory = VK_NULL_HANDLE;
+
+  VkImage resultImage;
+  VkDeviceMemory resultImageMemory;
+  VkImageView resultImageView;
+  void createComputeDescriptorSetLayout();
+  void createComputeDescriptorSet();
+  void createComputeDescriptorPool();
+  void createComputeBuffers();
+  void updateComputeDescriptorBuffers();
+  Chunk prevChunk{-1, -1};
+
+  void updateTriangleBuffer(const std::vector<TriangleGPU> &tris);
+  void updateBVHBuffer(const std::vector<BVHNodeGPU> &nodes);
+  void createResultImage();
+  void updateComputeUniformBuffer();
 
 public:
   bool framebufferResized = false;

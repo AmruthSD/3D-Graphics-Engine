@@ -24,6 +24,19 @@ void WindowHandler::drawFrame() {
 
   vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
+  if (prevChunk != camera->getCurrentChunk()) {
+    prevChunk = camera->getCurrentChunk();
+
+    std::vector<TriangleGPU> triangles;
+    std::vector<BVHNodeGPU> bvhNodes;
+
+    terrain->buildRayTracingScene(triangles, bvhNodes);
+
+    updateTriangleBuffer(triangles);
+    updateBVHBuffer(bvhNodes);
+  }
+  updateComputeUniformBuffer();
+
   vkResetCommandBuffer(commandBuffers[currentFrame],
                        /*VkCommandBufferResetFlagBits*/ 0);
   recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
@@ -99,8 +112,8 @@ void WindowHandler::recordCommandBuffer(VkCommandBuffer commandBuffer,
   renderPassInfo.renderArea.extent = swapChainExtent;
 
   std::array<VkClearValue, 2> clearValues{};
-  clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-  clearValues[1].depthStencil = {1.0f, 0};
+  clearValues[0].color = {{0.f, 0.f, 0.f, 1.f}};
+  clearValues[1].depthStencil = {1.f, 0};
 
   renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
   renderPassInfo.pClearValues = clearValues.data();
@@ -112,23 +125,29 @@ void WindowHandler::recordCommandBuffer(VkCommandBuffer commandBuffer,
                     graphicsPipeline);
 
   VkViewport viewport{};
-  viewport.x = 0.0f;
-  viewport.y = 0.0f;
   viewport.width = (float)swapChainExtent.width;
   viewport.height = (float)swapChainExtent.height;
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
   vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-  VkRect2D scissor{};
-  scissor.offset = {0, 0};
-  scissor.extent = swapChainExtent;
+  VkRect2D scissor{{0, 0}, swapChainExtent};
   vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           pipelineLayout, 0, 1, &descriptorSets[currentFrame],
                           0, nullptr);
 
+  FrustumCull(commandBuffer);
+
+  vkCmdEndRenderPass(commandBuffer);
+
+  if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+    throw std::runtime_error("failed to record command buffer!");
+  }
+}
+
+void WindowHandler::FrustumCull(VkCommandBuffer commandBuffer) {
   int camChunkX =
       static_cast<int>(std::floor(camera->getPosition().x / CHUNK_SIZE));
   int camChunkZ =
@@ -162,12 +181,6 @@ void WindowHandler::recordCommandBuffer(VkCommandBuffer commandBuffer,
             1, 0, 0);
       }
     }
-  }
-
-  vkCmdEndRenderPass(commandBuffer);
-
-  if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-    throw std::runtime_error("failed to record command buffer!");
   }
 }
 
